@@ -48,7 +48,10 @@ for line in f:
     line = "".join(l for l in line if l not in string.punctuation)
     line = string.lower(line)
     line = line.split()
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     for word in line:
         if word not in d:
             d[word] = index
