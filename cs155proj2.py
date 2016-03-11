@@ -48,10 +48,7 @@ for line in f:
     line = "".join(l for l in line if l not in string.punctuation)
     line = string.lower(line)
     line = line.split()
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
     for word in line:
         if word not in d:
             d[word] = index
@@ -60,13 +57,16 @@ for line in f:
     O.append(np.array(order))
 
 O = np.array(O)
-num_states = 1000
+num_states = 100
 start = np.array([1.0 / num_states for _ in range(num_states)])
 A = [np.array([1.0 / num_states for _ in range(num_states)]) for _ in range(num_states)]
 E = [np.array([1.0 / len(d) for _ in range(num_states)]) for _ in range(len(d))]
 
 idx = 0
 while idx < 5:
+    gammas = []
+    xis = []
+    
     for Y in O:
         alphas = forwards(A, E, Y, start)
         betas = backwards(A, E, Y)
@@ -87,23 +87,19 @@ while idx < 5:
                 mat.append(row)
             xi.append(mat)
     
-        gamma = np.array(gamma)
-        xi = np.array(xi)
-        start = gamma[0]
+        gammas.append(np.array(gamma))
+        xis.append(np.array(xi))
+    start = np.sum(gammas, axis=0)[0]
+    
+    a_nums = np.sum(np.sum(xis, axis=1), axis=0)
+    a_denoms = np.sum(np.sum(gammas, axis=1), axis=0)
+    for i in range(num_states):
+        for j in range(num_states):
+            A[i][j] = a_nums[i][j] / a_denoms[i]
         
-        numerator = np.sum(xi, axis=0)
-        denom = np.sum(gamma, axis=0)
-        A = [numerator[i] / denom[i] for i in range(num_states)]
-        
-        gamma_sum = np.sum(gamma, axis=0)
-        for v in range(len(d)):
-            for i in range(num_states):
-                numerator = 0
-                for t in range(len(Y)):
-                    if Y[t] == i:
-                        numerator += gamma[t][i]
-                E[v][i] = numerator / gamma_sum[i]
-        print A
-        print E
+    e_denoms = np.sum(np.sum(gammas, axis=1), axis=0)
+    # NEED TO GET E_NUMERATORS
+    print A
+    print E
     idx += 1
     
