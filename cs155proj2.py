@@ -1,7 +1,9 @@
 import string
+import os
 import numpy as np
 
-f = open("/Users/Surya/Documents/Junior/Winter2015/cs155/project2data/shakespeare.txt", 'r')
+directory = os.path.dirname(os.path.abspath(__file__))
+f = open(directory + "/shakespeare.txt", 'r')
 
 d = {}
 index = 0
