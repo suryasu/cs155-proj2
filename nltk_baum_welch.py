@@ -26,8 +26,40 @@ for line in f:
         order.append((d[word], None))
     O.append(np.array(order))
 
+num_samples = 20
 O = np.array(O)
-hmmt = hmm.HiddenMarkovModelTrainer(states=range(10), symbols=range(len(d)))
-model = hmmt.train_unsupervised(O, max_iterations=100)
+hmmt = hmm.HiddenMarkovModelTrainer(states=range(num_samples), symbols=range(len(d)))
+model = hmmt.train_unsupervised(O, max_iterations=50)
 
-print model.outputs
+# get probability of emission j given state i
+for i in range(num_samples):
+    total = 0
+    for j in range(len(d)):
+        total += model._outputs[i].prob(j)
+    assert (abs(total - 1.0) < 1e-6)
+
+# get probability of transitioning to state j from state i
+for i in range(num_samples):
+    total = 0
+    for j in range(num_samples):
+        total += model._transitions[i].prob(j)
+    assert (abs(total - 1.0) < 1e-6)
+
+# i = 0
+# get random emission given state i
+# print model._outputs[i].generate()
+
+# get random transition given current state i
+# print model._transitions[i].generate()
+
+poem = ""
+for i in range(14):
+    next_item = model._priors.generate()
+    poem += d.keys()[d.values().index(next_item)]
+    for j in range(9):
+        next_item = model._transitions[next_item].generate()
+        poem += " " + d.keys()[d.values().index(model._outputs[next_item].generate())]
+    poem += "\n"
+
+print poem
+
