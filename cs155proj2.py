@@ -72,8 +72,11 @@ while idx < 5:
         betas = backwards(A, E, Y)
         
         numerator = alphas * betas
+        #numerator = np.multiply (alphas, betas)
         denom = np.sum(alphas * betas, axis=1)
+        #denom = np.sum(np.multiply(alphas, betas), axis=1)
         gamma = [numerator[t] / denom[t] for t in range(len(Y))]
+        print denom
         
         denom = np.sum(alphas[len(alphas)-1])
         xi = []
@@ -101,5 +104,24 @@ while idx < 5:
     # NEED TO GET E_NUMERATORS
     print A
     print E
+    gamma = np.array(gamma)
+    xi = np.array(xi)
+    start = gamma[0]
+    
+    numerator = np.sum(xi, axis=0)
+    denom = np.sum(gamma, axis=0)
+    #print denom
+    A = [numerator[i] / denom[i] for i in range(num_states)]
+    
+    gamma_sum = np.sum(gamma, axis=0)
+    for v in range(len(d)):
+        for i in range(num_states):
+            numerator = 0
+            for t in range(len(Y)):
+                if Y[t] == i:
+                    numerator += gamma[t][i]
+            E[v][i] = numerator / gamma_sum[i]
+    #print A
+    #print E
     idx += 1
     
