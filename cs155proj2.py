@@ -2,6 +2,8 @@ import string
 import os
 import numpy as np
 
+# attempts to train an HMM using Baum Welch
+
 directory = os.path.dirname(os.path.abspath(__file__))
 f = open(directory + "/shakespeare.txt", 'r')
 
