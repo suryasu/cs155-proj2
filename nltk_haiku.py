@@ -68,7 +68,7 @@ for i in range(num_samples):
 
 poem = ""
 line_no = 1
-tot_syllables = 3
+tot_syllables = 5
 for i in range(3):
     next_item = model._priors.generate()
     word = words[model._outputs[next_item].generate()]
@@ -82,9 +82,9 @@ for i in range(3):
         poem += " " + word
         syllables += num_syllables(word)
     if line_no == 1:
-        tot_syllables = 5
+        tot_syllables = 7
     else:
-        tot_syllables = 3
+        tot_syllables = 5
     line_no += 1
     poem += "\n"
 
