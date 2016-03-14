@@ -2,83 +2,72 @@ import string
 import os
 import numpy as np
 import nltk.tag.hmm as hmm
-from nltk.corpus.reader import cmudict
+from nltk.corpus import cmudict
 
 def num_syllables(word):
+    ''' Counts the number of syllables in a word'''
     word = word.lower()
     while word not in d:
+        # take off letters from the end until we find a word
         word = word[:len(word)-1]
     if len(word) == 0:
+        # if it doesn't recognize the word at all, return 1 as default
         return 1
     return max([len([y for y in x if y[-1].isdigit()]) for x in d[word]])
 
 directory = os.path.dirname(os.path.abspath(__file__))
-f = open(directory + "/shakespeare.txt", 'r')
+shakespeare = open(directory + "/shakespeare.txt", 'r')
 d = cmudict.dict()
 
-words = []
-index = 0
-order = []
-O = []
+words = {} # dictionary of a word, and its frequency
+O = [] # observations
 
-for line in f:
+# trains using both Shakespeare and Spenser. 
+# use "for file_name in [shakespeare]" if only training on Shakespeare
+for line in shakespeare:
     line = line.strip()
-    if  line == "" or line[0] in string.digits:
+    if  len(line) < 10:
+        # This line is empty, or its the sonnet number
         continue
-    order = []
+    order = [] # order of words in a line
     line = "".join(l for l in line if l not in string.punctuation)
     line = string.lower(line)
     line = line.split()
 
     for word in line:
         try:
-            idx = words.index(word)
+            # try to see if the word is in the dictionary already
+            idx = words.keys().index(word)
+            words[word] += 1
         except ValueError:
+            # if not, add the word
             idx = len(words)
-            words.append(word)
+            words[word] = 1
+       # NLTK requires each  observation to be in the form (word, tag) 
         order.append((idx, None))
     O.append(np.array(order))
 
-num_samples = 20
+word_keys = words.keys() # the actual words
+num_states = 20 # number of hidden states
 O = np.array(O)
-print O
-hmmt = hmm.HiddenMarkovModelTrainer(states=range(num_samples), symbols=range(len(words)))
+hmmt = hmm.HiddenMarkovModelTrainer(states=range(num_states), symbols=range(len(words)))
 model = hmmt.train_unsupervised(O, max_iterations=50)
-
-# get probability of emission j given state i
-for i in range(num_samples):
-    total = 0
-    for j in range(len(words)):
-        total += model._outputs[i].prob(j)
-    assert (abs(total - 1.0) < 1e-6)
-
-# get probability of transitioning to state j from state i
-for i in range(num_samples):
-    total = 0
-    for j in range(num_samples):
-        total += model._transitions[i].prob(j)
-    assert (abs(total - 1.0) < 1e-6)
-
-# i = 0
-# get random emission given state i
-# print model._outputs[i].generate()
-
-# get random transition given current state i
-# print model._transitions[i].generate()
+A = model._transitions # transitions
+E = model._outputs # emissions
 
 poem = ""
 line_no = 1
 tot_syllables = 5
 for i in range(3):
     next_item = model._priors.generate()
-    word = words[model._outputs[next_item].generate()]
+    word = word_keys[E[next_item].generate()]
     poem += word
     syllables = num_syllables(word)
     while syllables < tot_syllables:
-        next_item = model._transitions[next_item].generate()
-        word = words[model._outputs[next_item].generate()]
-        while (syllables + num_syllables(word) > 10):
-            word = words[model._outputs[next_item].generate()]
+        next_item = A[next_item].generate()
+        word = word_keys[E[next_item].generate()]
+        while (syllables + num_syllables(word) > tot_syllables):
+            word = word_keys[E[next_item].generate()]
         poem += " " + word
         syllables += num_syllables(word)
     if line_no == 1:
